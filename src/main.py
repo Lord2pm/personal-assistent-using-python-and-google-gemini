@@ -54,7 +54,7 @@ with tabs[1]:
     if bt_alexa:
         tasks = get_all_tasks()
         text = create_prompt(
-            "Me diga de forma resumida quais as tarefas que eu devo priorizar com base no tempo de ińicio e fim. O formato da resposta deverá ser o seguinte: Primeiro fale tens algumas tarefas para priorizar, depois diga o id da tarefa, título da tarefa e as datas de início e de fim, não coloque ou fale asterisco. E, antes de dizer uma informação diga se se trata do id ou da data",
+            "Me diga de forma resumida quais as tarefas que eu devo priorizar com base no tempo de ińicio e fim. O formato da resposta deverá ser o seguinte: Primeiro fale tens algumas tarefas para priorizar, depois diga o id da tarefa, título da tarefa e as datas de início e de fim, não coloque ou fale asterisco. E, antes de dizer uma informação diga se se trata do id ou da data. E não inclua as tarefas cujo o tempo de término já foi ultrapassado",
             tasks,
         )
         text_to_audio(text.replace("*", ""))
