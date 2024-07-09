@@ -8,14 +8,15 @@ from utils.gemini import create_prompt
 
 
 st.set_page_config(page_title="Agendador de tarefas", layout="wide")
-st.title("Agendar Tarefas no Google Calendar")
+st.title("Agendador de Tarefas")
 st.text(
-    "Agende suas tarefas de forma fácil e rápida utilizando o Google Calendar e o poder do ChatGPT"
+    "Optimize o seu tempo! Agende suas tarefas de forma fácil e rápida utilizando o poder do Google Gemini"
 )
 
 tabs = st.tabs(["Agendar tarefas", "Ver tarefas agendadas"])
 
 with tabs[0]:
+    st.header("Cadastrar tarefa")
     with st.form(key="event_form"):
         summary = st.text_input("Título da tarefa")
         description = st.text_area("Descrição da tarefa")
@@ -26,7 +27,7 @@ with tabs[0]:
             "Hora de Fim", (datetime.now() + timedelta(hours=1)).time()
         )
 
-        submit_button = st.form_submit_button(label="Agendar")
+        submit_button = st.form_submit_button(label="Agendar Tarefa")
 
         if submit_button:
             if summary and description:
@@ -44,6 +45,7 @@ with tabs[0]:
                 st.toast("Preencha todos os campos devidamente")
 
 with tabs[1]:
+    st.header("Lista de tarefas")
     df = pd.read_sql(
         "select summary as Título, description as Descrição, start_datetime as Ínicio, end_datetime as Término from tasks",
         connection,
