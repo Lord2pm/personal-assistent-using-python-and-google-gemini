@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 
-from db import add_task, check_task, get_all_tasks, connection
-from assistente_audio import text_to_audio
-from gemini import create_prompt
+from models.db import add_task, check_task, get_all_tasks, connection
+from utils.assistente_audio import text_to_audio
+from utils.gemini import create_prompt
 
 
 st.set_page_config(page_title="Agendador de tarefas", layout="wide")
