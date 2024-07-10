@@ -1,10 +1,16 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from streamlit_calendar import calendar
 from streamlit_option_menu import option_menu
 
-from models.db import add_task, check_task, get_all_tasks, connection
+from models.db import (
+    add_task,
+    check_task,
+    get_all_tasks,
+    suggest_new_start_date,
+    connection,
+)
 from utils.assistente_audio import text_to_audio
 from utils.gemini import create_prompt
 
@@ -52,7 +58,15 @@ elif selected == "Cadastrar Projecto":
 
         if submit_button:
             if summary and description:
-                if check_task(start_date, end_date):
+                if start_date < datetime.now().date():
+                    start_date = suggest_new_start_date(start_date, end_date)
+                    st.warning(
+                        f"Sugestão: Transfira a data de início desta tarefa para o dia {start_date} e o fim para."
+                    )
+                    st.toast(
+                        "Conflito: A data de início é no passado. Sugerindo uma nova data..."
+                    )
+                elif check_task(start_date, end_date):
                     add_task(
                         summary,
                         description,
@@ -62,10 +76,26 @@ elif selected == "Cadastrar Projecto":
                         start_date,
                         end_date,
                     )
+                    text = create_prompt(
+                        f"Tendo em conta as características de um projecto contidas nesta, deia dicas para orientar a equipa de trabalho e ajudar a nivelar recursos de modos a concluir no tempo previsto",
+                        [
+                            summary,
+                            description,
+                            int(work_hours),
+                            int(number_week_days),
+                            int(number_people),
+                            start_date,
+                            end_date,
+                        ],
+                    )
+
                     st.success("Tarefa agendada com sucesso")
+                    st.warning(text)
                 else:
-                    st.toast(
-                        "Sugestão: Transfira a data de início desta tarefa para o dia e o fim para."
+                    td = end_date - start_date
+                    start_date = suggest_new_start_date(start_date, end_date)
+                    st.warning(
+                        f"Sugestão: Transfira a data de início deste projecto para o dia {start_date} e a data de término para {start_date + timedelta(days=td.days)}."
                     )
                     st.toast(
                         "Conflito: Já existe uma tarefa agendada para esse período."
@@ -73,9 +103,9 @@ elif selected == "Cadastrar Projecto":
             else:
                 st.toast("Preencha todos os campos devidamente")
 elif selected == "Ver Agenda":
-    tabs = st.tabs(["Lista de tarefas", "Agenda"])
+    tabs = st.tabs(["Agenda", "Lista de tarefas"])
 
-    with tabs[0]:
+    with tabs[1]:
         st.header("Lista de tarefas")
         df = pd.read_sql(
             "select * from projetos",
@@ -92,19 +122,21 @@ elif selected == "Ver Agenda":
             )
             text_to_audio(text.replace("*", ""))
             st.audio("audio.mp3", autoplay=True)
-    with tabs[1]:
-        events = [
-            {
-                "title": "Evento 1",
-                "start": "2024-07-10T10:00:00",
-                "end": "2024-07-10T12:00:00",
-            },
-            {
-                "title": "Evento 2",
-                "start": "2024-07-12T14:00:00",
-                "end": "2024-07-12T16:00:00",
-            },
-        ]
-        st.title("Olá")
+    with tabs[0]:
+        projects = get_all_tasks()
+        events = []
+
+        for project in projects:
+
+            dt_inicio = datetime.combine(project[6], time(8, 30))
+            dt_fim = datetime.combine(project[7], time.min)
+
+            events.append(
+                {
+                    "title": project[1],
+                    "start": dt_inicio.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "end": dt_fim.strftime("%Y-%m-%dT%H:%M:%S"),
+                }
+            )
 
         calendar(events)

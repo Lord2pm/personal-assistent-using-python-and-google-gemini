@@ -1,5 +1,5 @@
 import pymysql as mysql
-from datetime import datetime
+from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
@@ -70,3 +70,26 @@ def check_task(start_date, end_date):
     (count,) = cursor.fetchone()
 
     return False if count > 0 else True
+
+
+def suggest_new_start_date(start_date, end_date):
+    query = """
+        SELECT data_fim 
+        FROM projetos 
+        WHERE data_fim >= %s
+        ORDER BY data_fim ASC
+        LIMIT 1
+    """
+    cursor.execute(
+        query,
+        [
+            start_date,
+        ],
+    )
+    result = cursor.fetchone()
+
+    if result:
+        suggested_start_date = result[0] + timedelta(days=1)
+        return suggested_start_date
+    else:
+        return start_date
