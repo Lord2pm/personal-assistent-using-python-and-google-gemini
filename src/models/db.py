@@ -15,41 +15,58 @@ connection = mysql.connect(
 cursor = connection.cursor()
 
 
-def add_task(summary, description, start_datetime, end_datetime):
+def add_task(
+    summary,
+    description,
+    horas_por_dia,
+    dias_por_semana,
+    numero_pessoas,
+    start_date,
+    end_date,
+):
     cursor.execute(
-        "INSERT INTO tasks (summary, description, start_datetime, end_datetime) VALUES (%s, %s, %s, %s)",
-        [summary, description, start_datetime, end_datetime],
+        "INSERT INTO projetos (titulo, descricao, horas_trabalho_por_dia, dias_por_semana, numero_pessoas, data_inicio, data_fim) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        [
+            summary,
+            description,
+            horas_por_dia,
+            dias_por_semana,
+            numero_pessoas,
+            start_date,
+            end_date,
+        ],
     )
     connection.commit()
 
 
 def get_all_tasks() -> tuple:
-    cursor.execute("select * from tasks")
+    cursor.execute("select * from projetos")
     data = cursor.fetchall()
     return data
 
 
-def check_task(start_datetime, end_datetime) -> bool:
+def check_task(start_date, end_date):
     query = """
-    SELECT COUNT(*) FROM tasks
-    WHERE (start_datetime <= %s AND end_datetime >= %s)
-       OR (start_datetime <= %s AND end_datetime >= %s)
-       OR (start_datetime >= %s AND end_datetime <= %s)
+        SELECT COUNT(*) 
+        FROM projetos 
+        WHERE (data_inicio <= %s AND data_fim >= %s)
+        OR (data_inicio <= %s AND data_fim >= %s)
+        OR (%s <= data_inicio AND %s >= data_inicio)
+        OR (%s <= data_fim AND %s >= data_fim)
     """
     cursor.execute(
         query,
         [
-            start_datetime,
-            start_datetime,
-            end_datetime,
-            end_datetime,
-            start_datetime,
-            end_datetime,
+            end_date,
+            end_date,
+            start_date,
+            start_date,
+            start_date,
+            end_date,
+            start_date,
+            end_date,
         ],
     )
-    conflict_count = cursor.fetchone()[0]
+    (count,) = cursor.fetchone()
 
-    if conflict_count > 0:
-        return False
-
-    return True
+    return False if count > 0 else True
